@@ -40,6 +40,8 @@ module.exports = {
         prNumber: Number(process.env.PR_NUMBER), // Set this in your workflow or pass as env
         sha: process.env.GITHUB_SHA,
         workspace: process.env.GITHUB_WORKSPACE, // optional
+        workflowRunId: process.env.GITHUB_RUN_ID,
+        jobId: process.env.GITHUB_JOB,
         footerSuccess: "🎉 All tests passed!",
         footerFailed: "❌ Please fix the failing tests.",
         hideProjectTag: false, // optional, defaults to false
@@ -52,18 +54,20 @@ module.exports = {
 
 ### Options
 
-| Option           | Type      | Required | Description                                         |
-| ---------------- | --------- | -------- | --------------------------------------------------- |
-| `githubToken`    | `string`  | ✅       | GitHub personal access token or GitHub App token    |
-| `owner`          | `string`  | ✅       | GitHub repository owner (username or organization)  |
-| `repo`           | `string`  | ✅       | GitHub repository name                              |
-| `prNumber`       | `number`  | ✅       | Pull request number                                 |
-| `sha`            | `string`  | ✅       | Commit SHA for linking to specific files            |
-| `workspace`      | `string`  | ❌       | Workspace path for normalizing test file paths      |
-| `footerSuccess`  | `string`  | ❌       | Custom footer text when tests pass                  |
-| `footerFailed`   | `string`  | ❌       | Custom footer text when tests fail                  |
-| `hideProjectTag` | `boolean` | ❌       | Whether to hide the project attribution tag         |
-| `failOnError`    | `boolean` | ❌       | Whether to fail the build if comment creation fails |
+| Option           | Type      | Required | Description                                            |
+| ---------------- | --------- | -------- | ------------------------------------------------------ |
+| `githubToken`    | `string`  | ✅       | GitHub personal access token or GitHub App token       |
+| `owner`          | `string`  | ✅       | GitHub repository owner (username or organization)     |
+| `repo`           | `string`  | ✅       | GitHub repository name                                 |
+| `prNumber`       | `number`  | ✅       | Pull request number                                    |
+| `sha`            | `string`  | ✅       | Commit SHA for linking to specific files               |
+| `workflowRunId`  | `string`  | ✅       | GitHub workflow run ID for linking to the specific run |
+| `jobId`          | `string`  | ✅       | GitHub job ID for linking to the specific job          |
+| `workspace`      | `string`  | ❌       | Workspace path for normalizing test file paths         |
+| `footerSuccess`  | `string`  | ❌       | Custom footer text when tests pass                     |
+| `footerFailed`   | `string`  | ❌       | Custom footer text when tests fail                     |
+| `hideProjectTag` | `boolean` | ❌       | Whether to hide the project attribution tag            |
+| `failOnError`    | `boolean` | ❌       | Whether to fail the build if comment creation fails    |
 
 ## Usage Examples
 
@@ -82,6 +86,8 @@ module.exports = {
         repo: "jest-pr-reporter",
         prNumber: 1,
         sha: process.env.GITHUB_SHA,
+        workflowRunId: process.env.GITHUB_RUN_ID,
+        jobId: process.env.GITHUB_JOB,
       },
     ],
   ],
@@ -103,6 +109,8 @@ module.exports = {
         repo: "jest-pr-reporter",
         prNumber: 1,
         sha: process.env.GITHUB_SHA,
+        workflowRunId: process.env.GITHUB_RUN_ID,
+        jobId: process.env.GITHUB_JOB,
         footerSuccess: "🎉 Tests are passing! You can merge this PR.",
         footerFailed:
           "❌ Please review and fix the failing tests before merging.",
@@ -131,13 +139,6 @@ jobs:
       - run: npm test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Pass GitHub context to Jest config
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-number: ${{ github.event.pull_request.number }}
-          sha: ${{ github.sha }}
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
 ```
 
 ## How It Works
@@ -148,8 +149,9 @@ The reporter:
 2. Creates a detailed comment with test results
 3. Shows passing/failing test counts and summaries
 4. Links to specific test files and line numbers
-5. Updates existing comments automatically
-6. Provides configurable footers for different scenarios
+5. Includes links to the specific workflow run for traceability
+6. Updates existing comments automatically
+7. Provides configurable footers for different scenarios
 
 ## License
 

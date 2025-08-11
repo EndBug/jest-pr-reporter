@@ -48,6 +48,16 @@ interface ReporterOptions {
   workspace?: string;
 
   /**
+   * GitHub workflow run ID (required for linking to the specific workflow run).
+   */
+  workflowRunId: string;
+
+  /**
+   * GitHub job ID (required for linking to the specific job within the workflow run).
+   */
+  jobId: string;
+
+  /**
    * Footer text to add to the comment when the tests fail.
    * @example "Need help? Check the [Jest documentation](https://jestjs.io/docs/getting-started) or ask in the team chat."
    */
@@ -90,6 +100,10 @@ export default class JestReporter implements Reporter {
     }
 
     this._octokit = github.getOctokit(options.githubToken);
+
+    // Debug: Log the workflow run ID and job ID being used
+    core.debug(`Using workflow run ID: ${options.workflowRunId}`);
+    core.debug(`Using job ID: ${options.jobId}`);
   }
 
   async onRunComplete(
@@ -138,11 +152,15 @@ export default class JestReporter implements Reporter {
 
     const projectTag = `<p align="right">Created with <a href="https://github.com/EndBug/jest-pr-reporter"><code>EndBug/jest-pr-reporter</code></a> version ${require("../package.json").version}</p>`;
 
+    const runReference = `These results currently reflect the results from [this run](https://github.com/${this._options.owner}/${this._options.repo}/actions/runs/${this._options.workflowRunId}/job/${this._options.jobId})`;
+
     const newBody =
       status === "success"
         ? `# ✅ Content tests passing
 
 All content tests are passing. If the other CI checks are passing too, you can merge this PR yourself.
+
+${runReference}
 
 ## 📊 Test Summary
 
@@ -161,6 +179,7 @@ ${this._options?.hideProjectTag ? "" : projectTag}
 > [!IMPORTANT]
 > **${failedTests.length} failing tests** were detected in **${failedTestSuites.length} test suites**. Please review and fix these issues before merging.
 
+${runReference}  
 This comment will be updated automatically as you push new commits.
 
 ## 📊 Test Summary
