@@ -150,8 +150,8 @@ export default class JestReporter implements Reporter {
       const pr = response.data;
       const isFork = pr.head.repo?.fork || false;
 
-      // For forks, use the source repository and branch
-      // For same-repo PRs, use the target repository and branch
+      // Always use the source repository and branch name
+      // This ensures links point to the correct branch for both forks and same-repo PRs
       this._prSource = {
         owner: isFork
           ? pr.head.repo?.owner?.login || this._options.owner
@@ -159,7 +159,7 @@ export default class JestReporter implements Reporter {
         repo: isFork
           ? pr.head.repo?.name || this._options.repo
           : this._options.repo,
-        branch: isFork ? pr.head.ref : this._options.sha,
+        branch: pr.head.ref,
         isFork,
       };
 
@@ -179,10 +179,13 @@ export default class JestReporter implements Reporter {
     } catch (error) {
       core.warning(`Failed to fetch PR details: ${error}`);
       // Fallback to target repository if we can't fetch PR details
+      // Try to get branch from GitHub context, fallback to 'main' if not available
+      const fallbackBranch =
+        github.context.ref?.replace("refs/heads/", "") || "main";
       this._prSource = {
         owner: this._options.owner,
         repo: this._options.repo,
-        branch: this._options.sha,
+        branch: fallbackBranch,
         isFork: false,
       };
       core.info(
