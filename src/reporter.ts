@@ -82,11 +82,37 @@ interface ReporterOptions {
   failOnError?: boolean;
 }
 
+/**
+ * Information about the source of a pull request.
+ */
+interface PullRequestSource {
+  /**
+   * The owner of the source repository.
+   */
+  owner: string;
+
+  /**
+   * The name of the source repository.
+   */
+  repo: string;
+
+  /**
+   * The branch name in the source repository.
+   */
+  branch: string;
+
+  /**
+   * Whether the source is a fork.
+   */
+  isFork: boolean;
+}
+
 export default class JestReporter implements Reporter {
   private _error?: Error;
   protected _globalConfig: Config.GlobalConfig;
   protected _options: ReporterOptions;
   private _octokit: ReturnType<typeof github.getOctokit>;
+  private _prSource?: PullRequestSource;
 
   // GitHub comment body limit is 65536 characters, leave some buffer
   private readonly MAX_COMMENT_LENGTH = 60000;
@@ -106,11 +132,74 @@ export default class JestReporter implements Reporter {
     core.debug(`Using job ID: ${options.jobId}`);
   }
 
+  /**
+   * Fetches pull request details to determine the source repository and branch.
+   */
+  private async _fetchPullRequestSource(): Promise<PullRequestSource> {
+    if (this._prSource) {
+      return this._prSource;
+    }
+
+    try {
+      const response = await this._octokit.rest.pulls.get({
+        owner: this._options.owner,
+        repo: this._options.repo,
+        pull_number: this._options.prNumber,
+      });
+
+      const pr = response.data;
+      const isFork = pr.head.repo?.fork || false;
+
+      // For forks, use the source repository and branch
+      // For same-repo PRs, use the target repository and branch
+      this._prSource = {
+        owner: isFork
+          ? pr.head.repo?.owner?.login || this._options.owner
+          : this._options.owner,
+        repo: isFork
+          ? pr.head.repo?.name || this._options.repo
+          : this._options.repo,
+        branch: isFork ? pr.head.ref : this._options.sha,
+        isFork,
+      };
+
+      // Debug: Log the PR source information
+      core.debug(`>>> PR Source: ${JSON.stringify(this._prSource)}`);
+      if (isFork) {
+        core.info(
+          `>>> PR is from fork: ${this._prSource.owner}/${this._prSource.repo}:${this._prSource.branch}`,
+        );
+      } else {
+        core.info(
+          `>>> PR is from same repository: ${this._prSource.owner}/${this._prSource.repo}:${this._prSource.branch}`,
+        );
+      }
+
+      return this._prSource;
+    } catch (error) {
+      core.warning(`Failed to fetch PR details: ${error}`);
+      // Fallback to target repository if we can't fetch PR details
+      this._prSource = {
+        owner: this._options.owner,
+        repo: this._options.repo,
+        branch: this._options.sha,
+        isFork: false,
+      };
+      core.info(
+        `>>> Using fallback repository: ${this._prSource.owner}/${this._prSource.repo}:${this._prSource.branch}`,
+      );
+      return this._prSource;
+    }
+  }
+
   async onRunComplete(
     test?: Set<TestContext>,
     runResults?: AggregatedResult,
   ): Promise<void> {
     if (!runResults) return;
+
+    // Fetch PR source information for proper link construction
+    const prSource = await this._fetchPullRequestSource();
 
     const passingTestSuites = runResults.testResults.filter(
       (test) => test.numFailingTests === 0,
@@ -221,7 +310,7 @@ ${(() => {
           (test) => test.status === "failed",
         );
 
-        let suiteContent = `### 📂 Test Suite: [\`${normalizedPath}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${normalizedPath})\n\n<ul>\n`;
+        let suiteContent = `### 📂 Test Suite: [\`${normalizedPath}\`](https://github.com/${prSource.owner}/${prSource.repo}/blob/${prSource.branch}/${normalizedPath})\n\n<ul>\n`;
 
         let testsInThisSuite = 0;
         let testsSkippedInThisSuite = 0;
@@ -245,7 +334,7 @@ ${(() => {
           const cleanTestTitle = parseTitleMetadata(test.title).title;
 
           const testContent = `<li><strong><code>${cleanAncestors.join(" > ")} | ${cleanTestTitle}</code></strong>
-${fileToLink ? `<br>🎯 <strong>Fix needed in:</strong> <a href="https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink}"><code>${fileToLink}</code></a><br>` : ""}
+${fileToLink ? `<br>🎯 <strong>Fix needed in:</strong> <a href="https://github.com/${prSource.owner}/${prSource.repo}/blob/${prSource.branch}/${fileToLink}"><code>${fileToLink}</code></a><br>` : ""}
 <details>
 <summary>📋 Error Details</summary>
 
@@ -304,6 +393,8 @@ ${this._options?.hideProjectTag ? "" : projectTag}
       repo: this._options.repo,
     };
 
+    // Note: Comments are created on the target repository's PR, not the source repository
+    // So we use the target repository info here, even for forks
     try {
       const previous = await findPreviousComment(
         this._octokit,
