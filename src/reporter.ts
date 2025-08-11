@@ -74,6 +74,9 @@ export default class JestReporter implements Reporter {
   protected _options: ReporterOptions;
   private _octokit: ReturnType<typeof github.getOctokit>;
 
+  // GitHub comment body limit is 65536 characters, leave some buffer
+  private readonly MAX_COMMENT_LENGTH = 60000;
+
   constructor(globalConfig: Config.GlobalConfig, options: ReporterOptions) {
     this._globalConfig = globalConfig;
     this._options = options;
@@ -161,23 +164,54 @@ This comment will be updated automatically as you push new commits.
 
 ## 🔍 Failing Test Details
 
-${failedTestSuites
-  .map((suite) => {
-    const normalizedPath = this._options.workspace
-      ? suite.testFilePath.replace(this._options.workspace + "/", "")
-      : suite.testFilePath;
+${(() => {
+  const suitesToShow = failedTestSuites.slice(0, 20); // Show up to 20 failing suites
+  const isTruncated = failedTestSuites.length > 20;
 
-    return `### Test Suite: [\`${normalizedPath}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${normalizedPath})
+  let truncationMessage = "";
+  if (isTruncated) {
+    truncationMessage = `> [!NOTE]
+> **Note:** Only the first 20 test suites are shown due to comment length limits. There are ${failedTestSuites.length - 20} additional failing test suites that need review.
 
-<ul>
-${suite.testResults
-  .filter((test) => test.status === "failed")
-  .map((test) => {
-    // Check if test has custom metadata with targetFile
-    const metadata = (test as any).metadata as Metadata | undefined;
-    const fileToLink = metadata?.targetFile;
+`;
+  }
 
-    return `<li><strong><code>${test.ancestorTitles.join(" > ")} | ${test.title}</code></strong>
+  return (() => {
+    let cumulativeLength = 0;
+    let totalTestsShown = 0;
+    let totalTestsSkipped = 0;
+    const MAX_TOTAL_TESTS = 20; // Maximum total tests to show across all suites
+
+    // Build the test details while tracking cumulative length
+    const testDetails = suitesToShow
+      .map((suite) => {
+        const normalizedPath = this._options.workspace
+          ? suite.testFilePath.replace(this._options.workspace + "/", "")
+          : suite.testFilePath;
+
+        const failedTestsInSuite = suite.testResults.filter(
+          (test) => test.status === "failed",
+        );
+
+        let suiteContent = `### Test Suite: [\`${normalizedPath}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${normalizedPath})\n\n<ul>\n`;
+
+        let testsInThisSuite = 0;
+        let testsSkippedInThisSuite = 0;
+
+        for (const test of failedTestsInSuite) {
+          // Stop if we've reached the total test limit
+          if (totalTestsShown >= MAX_TOTAL_TESTS) {
+            testsSkippedInThisSuite =
+              failedTestsInSuite.length - testsInThisSuite;
+            totalTestsSkipped += testsSkippedInThisSuite;
+            break;
+          }
+
+          // Check if test has custom metadata with targetFile
+          const metadata = (test as any).metadata as Metadata | undefined;
+          const fileToLink = metadata?.targetFile;
+
+          const testContent = `<li><strong><code>${test.ancestorTitles.join(" > ")} | ${test.title}</code></strong>
 ${fileToLink ? `<br>🎯 **Fix needed in:** [\`${fileToLink}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink})<br>` : ""}
 <details>
 <summary>📋 Error Details</summary>
@@ -202,11 +236,43 @@ ${JSON.stringify(metadata, null, 2)}
 }
 
 </li>`;
-  })
-  .join("\n\n")} 
-</ul>`;
-  })
-  .join("\n\n")}
+
+          // Check if adding this test would exceed the limit
+          if (cumulativeLength + testContent.length > this.MAX_COMMENT_LENGTH) {
+            testsSkippedInThisSuite =
+              failedTestsInSuite.length - testsInThisSuite;
+            totalTestsSkipped += testsSkippedInThisSuite;
+            break;
+          }
+
+          suiteContent += testContent + "\n\n";
+          cumulativeLength += testContent.length;
+          testsInThisSuite++;
+          totalTestsShown++;
+        }
+
+        suiteContent += "</ul>";
+
+        // Add suite truncation message if tests were skipped
+        if (testsSkippedInThisSuite > 0) {
+          suiteContent += `\n\n> [!NOTE]\n> **Note:** Only the first ${testsInThisSuite} failing tests are shown for this suite. There are ${testsSkippedInThisSuite} additional failing tests in this suite.`;
+        }
+
+        return suiteContent;
+      })
+      .filter((suiteContent) => suiteContent.length > 0);
+
+    // Add overall truncation message if any tests were skipped
+    let overallTruncationMessage = "";
+    if (totalTestsSkipped > 0) {
+      overallTruncationMessage = `\n\n> [!WARNING]\n> **Test limit reached:** Only ${totalTestsShown} failing tests are shown (limited to ${MAX_TOTAL_TESTS} for manual review). There are ${totalTestsSkipped} additional failing tests that need manual review.\n\n`;
+    }
+
+    return (
+      truncationMessage + overallTruncationMessage + testDetails.join("\n\n")
+    );
+  })();
+})()}
 
 ${this._options?.footerFailed ? `\n\n${this._options.footerFailed}` : ""}
 
