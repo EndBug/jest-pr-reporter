@@ -152,7 +152,7 @@ export default class JestReporter implements Reporter {
 
     const projectTag = `<p align="right">Created with <a href="https://github.com/EndBug/jest-pr-reporter"><code>EndBug/jest-pr-reporter</code></a> version ${require("../package.json").version}</p>`;
 
-    const runReference = `These results currently reflect the results from [this run](https://github.com/${this._options.owner}/${this._options.repo}/actions/runs/${this._options.workflowRunId}/job/${this._options.jobId})`;
+    const runReference = `These results currently reflect the results from [this run](https://github.com/${this._options.owner}/${this._options.repo}/actions/runs/${this._options.workflowRunId}/job/${this._options.jobId}).`;
 
     const newBody =
       status === "success"
@@ -221,7 +221,7 @@ ${(() => {
           (test) => test.status === "failed",
         );
 
-        let suiteContent = `### Test Suite: [\`${normalizedPath}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${normalizedPath})\n\n<ul>\n`;
+        let suiteContent = `### 📂 Test Suite: [\`${normalizedPath}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${normalizedPath})\n\n<ul>\n`;
 
         let testsInThisSuite = 0;
         let testsSkippedInThisSuite = 0;
