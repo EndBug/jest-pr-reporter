@@ -46,13 +46,24 @@ export function parseTitleMetadata(title: string): {
 }
 
 /**
- * Extracts metadata from ancestor titles
+ * Extracts metadata from ancestor titles and test title
  * @param ancestorTitles - Array of ancestor titles
+ * @param testTitle - The test title (optional)
  * @returns The metadata object if found, undefined otherwise
  */
 export function extractMetadataFromAncestors(
   ancestorTitles: string[],
+  testTitle?: string,
 ): Metadata | undefined {
+  // First check the test title itself (highest priority)
+  if (testTitle) {
+    const { metadata } = parseTitleMetadata(testTitle);
+    if (metadata) {
+      return metadata;
+    }
+  }
+
+  // Then check ancestor titles from last to first
   for (let i = ancestorTitles.length - 1; i >= 0; i--) {
     const { metadata } = parseTitleMetadata(ancestorTitles[i]);
     if (metadata) {

@@ -7,7 +7,11 @@ import type {
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 import { createComment, findPreviousComment, updateComment } from "./comment";
-import { extractMetadataFromAncestors, cleanAncestorTitles } from "./metadata";
+import {
+  extractMetadataFromAncestors,
+  cleanAncestorTitles,
+  parseTitleMetadata,
+} from "./metadata";
 
 /**
  * Options for configuring the Jest PR Reporter.
@@ -213,11 +217,15 @@ ${(() => {
           }
 
           // Check if test has custom metadata with targetFile
-          const metadata = extractMetadataFromAncestors(test.ancestorTitles);
+          const metadata = extractMetadataFromAncestors(
+            test.ancestorTitles,
+            test.title,
+          );
           const fileToLink = metadata?.targetFile;
           const cleanAncestors = cleanAncestorTitles(test.ancestorTitles);
+          const cleanTestTitle = parseTitleMetadata(test.title).title;
 
-          const testContent = `<li><strong><code>${cleanAncestors.join(" > ")} | ${test.title}</code></strong>
+          const testContent = `<li><strong><code>${cleanAncestors.join(" > ")} | ${cleanTestTitle}</code></strong>
 ${fileToLink ? `<br>🎯 **Fix needed in:** [\`${fileToLink}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink})<br>` : ""}
 <details>
 <summary>📋 Error Details</summary>

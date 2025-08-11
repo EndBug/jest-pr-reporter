@@ -114,6 +114,16 @@ describe(
 );
 ```
 
+**Benefits of using describe blocks for metadata:**
+
+- **DRY principle**: Set metadata once for multiple related tests
+- **Consistency**: All tests in a suite point to the same target file
+- **Maintainability**: Change the target file in one place
+- **Cleaner test titles**: Individual test titles remain focused on behavior
+- **Better organization**: Group related tests with shared metadata
+
+```
+
 ## Available Metadata Properties
 
 - `targetFile?: string` - The file path that needs to be fixed
@@ -132,12 +142,14 @@ describe(
 When you use `createTitleWithMetadata`, the reporter will:
 
 1. Encode the metadata as JSON in the test title after `::meta::`
-2. Automatically extract and use the metadata when generating reports
-3. Display "🎯 **Fix needed in:** [filename]" above the error details
-4. Link to the specified file instead of just the test file
-5. Fall back to the test file path if no targetFile is specified
-6. Log the metadata in debug output for troubleshooting
-7. Hide the metadata from displayed test titles in reports
+2. Check for metadata in the test title first (highest priority)
+3. If no metadata in test title, check ancestor titles (describe blocks) from last to first
+4. Automatically extract and use the metadata when generating reports
+5. Display "🎯 **Fix needed in:** [filename]" above the error details
+6. Link to the specified file instead of just the test file
+7. Fall back to the test file path if no targetFile is specified
+8. Log the metadata in debug output for troubleshooting
+9. Hide the metadata from displayed test titles in reports
 
 ## Utility Functions
 
@@ -149,9 +161,9 @@ Creates a test title with embedded metadata.
 
 Parses a title to extract metadata and clean title.
 
-### `extractMetadataFromAncestors(ancestorTitles)`
+### `extractMetadataFromAncestors(ancestorTitles, testTitle?)`
 
-Extracts metadata from an array of ancestor titles (useful for describe blocks).
+Extracts metadata from an array of ancestor titles and optionally from the test title itself. Useful for describe blocks and individual tests with metadata.
 
 ### `cleanAncestorTitles(ancestorTitles)`
 
@@ -163,3 +175,4 @@ Removes metadata from ancestor titles for clean display.
 - **Inheritance**: Tests inherit metadata from their parent describe blocks
 - **Fallback**: If no metadata is found, the reporter falls back to the test file path
 - **JSON format**: Metadata must be valid JSON (strings need quotes, etc.)
+```
