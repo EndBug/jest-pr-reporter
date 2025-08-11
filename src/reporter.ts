@@ -118,6 +118,10 @@ export default class JestReporter implements Reporter {
         core.info(
           `  Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"${targetFile ? ` - Target File: ${targetFile}` : ""}`,
         );
+        // Debug: Log the full metadata object if present
+        if ((test as any).metadata) {
+          core.info("    metadata: " + JSON.stringify((test as any).metadata));
+        }
         if (test.status === "failed") {
           core.info(`    ^^^ This test is marked as FAILED`);
         }
