@@ -1,7 +1,6 @@
 // From https://github.com/marocchino/sticky-pull-request-comment
 
-import * as core from "@actions/core";
-import type { GitHub } from "@actions/github/lib/utils";
+import * as github from "@actions/github";
 import type {
   IssueComment,
   ReportedContentClassifiers,
@@ -10,7 +9,9 @@ import type {
 } from "@octokit/graphql-schema";
 
 type CreateCommentResponse = Awaited<
-  ReturnType<InstanceType<typeof GitHub>["rest"]["issues"]["createComment"]>
+  ReturnType<
+    ReturnType<typeof github.getOctokit>["rest"]["issues"]["createComment"]
+  >
 >;
 
 function headerComment(header: string): string {
@@ -26,7 +27,7 @@ function bodyWithoutHeader(body: string, header: string): string {
 }
 
 export async function findPreviousComment(
-  octokit: InstanceType<typeof GitHub>,
+  octokit: ReturnType<typeof github.getOctokit>,
   repo: {
     owner: string;
     repo: string;
@@ -88,14 +89,14 @@ export async function findPreviousComment(
 }
 
 export async function updateComment(
-  octokit: InstanceType<typeof GitHub>,
+  octokit: ReturnType<typeof github.getOctokit>,
   id: string,
   body: string,
   header: string,
   previousBody?: string,
 ): Promise<void> {
   if (!body && !previousBody)
-    return core.warning("Comment body cannot be blank");
+    return console.warn("Comment body cannot be blank");
 
   const rawPreviousBody: string = previousBody
     ? bodyWithoutHeader(previousBody, header)
@@ -123,7 +124,7 @@ export async function updateComment(
   );
 }
 export async function createComment(
-  octokit: InstanceType<typeof GitHub>,
+  octokit: ReturnType<typeof github.getOctokit>,
   repo: {
     owner: string;
     repo: string;
@@ -134,7 +135,7 @@ export async function createComment(
   previousBody?: string,
 ): Promise<CreateCommentResponse | undefined> {
   if (!body && !previousBody) {
-    core.warning("Comment body cannot be blank");
+    console.warn("Comment body cannot be blank");
     return;
   }
 
@@ -147,7 +148,7 @@ export async function createComment(
   });
 }
 export async function deleteComment(
-  octokit: InstanceType<typeof GitHub>,
+  octokit: ReturnType<typeof github.getOctokit>,
   id: string,
 ): Promise<void> {
   await octokit.graphql(
@@ -162,7 +163,7 @@ export async function deleteComment(
   );
 }
 export async function minimizeComment(
-  octokit: InstanceType<typeof GitHub>,
+  octokit: ReturnType<typeof github.getOctokit>,
   subjectId: string,
   classifier: ReportedContentClassifiers,
 ): Promise<void> {

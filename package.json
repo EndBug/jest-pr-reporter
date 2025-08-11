@@ -16,7 +16,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.1",
     "@jest/reporters": "^30.0.5",
     "@octokit/graphql-schema": "^15.26.0"

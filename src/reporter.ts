@@ -4,9 +4,7 @@ import type {
   TestContext,
   Reporter,
 } from "@jest/reporters";
-import { GitHub } from "@actions/github/lib/utils";
 import * as github from "@actions/github";
-import * as core from "@actions/core";
 import { createComment, findPreviousComment, updateComment } from "./comment";
 
 /**
@@ -15,9 +13,33 @@ import { createComment, findPreviousComment, updateComment } from "./comment";
 interface ReporterOptions {
   /**
    * GitHub token for authentication.
-   * @default process.env.GITHUB_TOKEN
    */
-  githubToken?: string;
+  githubToken: string;
+
+  /**
+   * GitHub repository owner (e.g., "EndBug").
+   */
+  owner: string;
+
+  /**
+   * GitHub repository name (e.g., "jest-pr-reporter").
+   */
+  repo: string;
+
+  /**
+   * Pull request number.
+   */
+  prNumber: number;
+
+  /**
+   * GitHub commit SHA.
+   */
+  sha: string;
+
+  /**
+   * GitHub workspace path (optional, used for normalizing test file paths).
+   */
+  workspace?: string;
 
   /**
    * Footer text to add to the comment when the tests fail.
@@ -47,19 +69,18 @@ interface ReporterOptions {
 export default class JestReporter implements Reporter {
   private _error?: Error;
   protected _globalConfig: Config.GlobalConfig;
-  protected _options?: ReporterOptions;
-  private _octokit: InstanceType<typeof GitHub>;
+  protected _options: ReporterOptions;
+  private _octokit: ReturnType<typeof github.getOctokit>;
 
-  constructor(globalConfig: Config.GlobalConfig, options?: ReporterOptions) {
+  constructor(globalConfig: Config.GlobalConfig, options: ReporterOptions) {
     this._globalConfig = globalConfig;
     this._options = options;
 
-    const token = options?.githubToken ?? process.env.GITHUB_TOKEN;
-    if (!token) {
+    if (!options.githubToken) {
       throw new Error("GitHub token is required");
     }
 
-    this._octokit = github.getOctokit(token);
+    this._octokit = github.getOctokit(options.githubToken);
   }
 
   async onRunComplete(
@@ -67,13 +88,6 @@ export default class JestReporter implements Reporter {
     runResults?: AggregatedResult,
   ): Promise<void> {
     if (!runResults) return;
-    if (process.env.GITHUB_ACTIONS !== "true") return;
-
-    const prNumber = github.context.payload.pull_request?.number;
-    if (!prNumber) {
-      core.warning("This reporter must be used in a pull request. Exiting...");
-      return;
-    }
 
     const passingTestSuites = runResults.testResults.filter(
       (test) => test.numFailingTests === 0,
@@ -130,11 +144,11 @@ This comment will be updated automatically as you push new commits.
 
 ${failedTestSuites
   .map((suite) => {
-    const normalizedPath = process.env.GITHUB_WORKSPACE
-      ? suite.testFilePath.replace(process.env.GITHUB_WORKSPACE + "/", "")
+    const normalizedPath = this._options.workspace
+      ? suite.testFilePath.replace(this._options.workspace + "/", "")
       : suite.testFilePath;
 
-    return `### Test Suite: [\`${normalizedPath}\`](https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${normalizedPath})
+    return `### Test Suite: [\`${normalizedPath}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${normalizedPath})
 
 <ul>
 ${suite.testResults
@@ -162,19 +176,25 @@ ${this._options?.hideProjectTag ? "" : projectTag}
 `.trim();
 
     const repo = {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner: this._options.owner,
+      repo: this._options.repo,
     };
 
     const previous = await findPreviousComment(
       this._octokit,
       repo,
-      prNumber,
+      this._options.prNumber,
       "",
     );
 
     if (!previous) {
-      await createComment(this._octokit, repo, prNumber, newBody, "");
+      await createComment(
+        this._octokit,
+        repo,
+        this._options.prNumber,
+        newBody,
+        "",
+      );
       return;
     } else {
       await updateComment(
