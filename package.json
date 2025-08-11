@@ -15,12 +15,16 @@
     "test": "jest"
   },
   "dependencies": {
-    "@jest/reporters": "^30.0.5"
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "@jest/reporters": "^30.0.5",
+    "@octokit/graphql-schema": "^15.26.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "22.x.x",
     "jest": "^30.0.5",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2"
   }
