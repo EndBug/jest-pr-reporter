@@ -149,7 +149,7 @@ ${this._options?.hideProjectTag ? "" : projectTag}
 `.trim()
         : `# 🚨 Content tests failed
 
-> [!WARNING]
+> [!IMPORTANT]
 > **${failedTests.length} failing tests** were detected in **${failedTestSuites.length} test suites**. Please review and fix these issues before merging.
 
 This comment will be updated automatically as you push new commits.
@@ -255,7 +255,7 @@ ${JSON.stringify(metadata, null, 2)}
 
         // Add suite truncation message if tests were skipped
         if (testsSkippedInThisSuite > 0) {
-          suiteContent += `\n\n> [!NOTE]\n> **Note:** Only the first ${testsInThisSuite} failing tests are shown for this suite. There are ${testsSkippedInThisSuite} additional failing tests in this suite.`;
+          suiteContent += `\n\n> [!NOTE]\n> **Note:** ${testsInThisSuite === 0 ? "No failing tests are being shown for this suite, to keep this comment within GitHub's character limit." : `Only the first ${testsInThisSuite} failing tests are shown for this suite.`} There are ${testsSkippedInThisSuite} additional failing tests in this suite.`;
         }
 
         return suiteContent;
