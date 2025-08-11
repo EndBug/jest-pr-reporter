@@ -46,31 +46,125 @@ export function parseTitleMetadata(title: string): {
 }
 
 /**
- * Extracts metadata from ancestor titles and test title
+ * Extracts and merges metadata from ancestor titles and test title
  * @param ancestorTitles - Array of ancestor titles
  * @param testTitle - The test title (optional)
- * @returns The metadata object if found, undefined otherwise
+ * @returns The merged metadata object if found, undefined otherwise
  */
 export function extractMetadataFromAncestors(
   ancestorTitles: string[],
   testTitle?: string,
 ): Metadata | undefined {
-  // First check the test title itself (highest priority)
-  if (testTitle) {
-    const { metadata } = parseTitleMetadata(testTitle);
+  const allMetadata: Metadata[] = [];
+  const metadataSources: string[] = [];
+
+  // First check ancestor titles from first to last (smaller to larger scope)
+  // This gives lower priority to broader describe blocks
+  for (let i = 0; i < ancestorTitles.length; i++) {
+    const { metadata } = parseTitleMetadata(ancestorTitles[i]);
     if (metadata) {
-      return metadata;
+      allMetadata.push(metadata);
+      metadataSources.push(`ancestor[${i}]`);
     }
   }
 
-  // Then check ancestor titles from last to first
-  for (let i = ancestorTitles.length - 1; i >= 0; i--) {
-    const { metadata } = parseTitleMetadata(ancestorTitles[i]);
+  // Then check the test title itself (highest priority)
+  if (testTitle) {
+    const { metadata } = parseTitleMetadata(testTitle);
     if (metadata) {
-      return metadata;
+      allMetadata.push(metadata);
+      metadataSources.push("test title");
     }
   }
-  return undefined;
+
+  // If no metadata found, return undefined
+  if (allMetadata.length === 0) {
+    return undefined;
+  }
+
+  // Merge all metadata objects, with later ones (higher priority) overriding earlier ones
+  const mergedMetadata: Metadata = {};
+
+  for (const metadata of allMetadata) {
+    Object.assign(mergedMetadata, metadata);
+  }
+
+  // Debug logging when multiple metadata sources are merged
+  if (allMetadata.length > 1) {
+    console.log(">>> Merging metadata from multiple sources:", metadataSources);
+    console.log(">>> Final merged metadata:", mergedMetadata);
+  }
+
+  return mergedMetadata;
+}
+
+/**
+ * Extracts metadata with debug information about the merge process
+ * @param ancestorTitles - Array of ancestor titles
+ * @param testTitle - The test title (optional)
+ * @returns Object containing the merged metadata and debug information
+ */
+export function extractMetadataWithDebug(
+  ancestorTitles: string[],
+  testTitle?: string,
+): {
+  metadata?: Metadata;
+  debug: {
+    sources: string[];
+    individualMetadata: Metadata[];
+    mergeOrder: string[];
+  };
+} {
+  const allMetadata: Metadata[] = [];
+  const metadataSources: string[] = [];
+  const mergeOrder: string[] = [];
+
+  // First check ancestor titles from first to last (smaller to larger scope)
+  for (let i = 0; i < ancestorTitles.length; i++) {
+    const { metadata } = parseTitleMetadata(ancestorTitles[i]);
+    if (metadata) {
+      allMetadata.push(metadata);
+      metadataSources.push(`ancestor[${i}]`);
+      mergeOrder.push(`ancestor[${i}] (${ancestorTitles[i]})`);
+    }
+  }
+
+  // Then check the test title itself (highest priority)
+  if (testTitle) {
+    const { metadata } = parseTitleMetadata(testTitle);
+    if (metadata) {
+      allMetadata.push(metadata);
+      metadataSources.push("test title");
+      mergeOrder.push(`test title (${testTitle})`);
+    }
+  }
+
+  // If no metadata found, return debug info with no metadata
+  if (allMetadata.length === 0) {
+    return {
+      debug: {
+        sources: [],
+        individualMetadata: [],
+        mergeOrder: [],
+      },
+    };
+  }
+
+  // Merge all metadata objects, with later ones (higher priority) overriding earlier ones
+  const mergedMetadata: Metadata = {};
+
+  for (const metadata of allMetadata) {
+    Object.assign(mergedMetadata, metadata);
+  }
+
+  return {
+    metadata: mergedMetadata,
+    debug: {
+      sources: metadataSources,
+      individualMetadata: allMetadata,
+      mergeOrder,
+    },
+  };
 }
 
 /**
