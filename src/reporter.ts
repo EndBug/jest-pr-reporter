@@ -1,7 +1,7 @@
 import type {
   AggregatedResult,
   Config,
-  Context,
+  TestContext,
   Reporter,
   ReporterOnStartOptions,
   Test,
@@ -62,7 +62,7 @@ export default class JestReporter implements Reporter {
   }
 
   onRunComplete(
-    test?: Set<Context>,
+    test?: Set<TestContext>,
     runResults?: AggregatedResult
   ): Promise<void> | void {
     console.log(`onRunComplete test: ${JSON.stringify(test, null, 2)}`)
