@@ -152,6 +152,7 @@ ${failedTestSuites
 
 <ul>
 ${suite.testResults
+  .filter((test) => test.status === "failed")
   .map((test) => {
     return `<li><strong><code>${test.ancestorTitles.join(" > ")} | ${test.title}</code></strong>
 
