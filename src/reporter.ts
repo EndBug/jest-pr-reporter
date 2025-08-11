@@ -7,6 +7,7 @@ import type {
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 import { createComment, findPreviousComment, updateComment } from "./comment";
+import { Metadata } from "../types/jest";
 
 /**
  * Options for configuring the Jest PR Reporter.
@@ -110,8 +111,9 @@ export default class JestReporter implements Reporter {
     failedTestSuites.forEach((suite, suiteIndex) => {
       core.info(`Suite ${suiteIndex + 1}: ${suite.testFilePath}`);
       suite.testResults.forEach((test, testIndex) => {
+        const targetFile = (test as any).metadata?.targetFile;
         core.info(
-          `  Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"`,
+          `  Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"${targetFile ? ` - Target File: ${targetFile}` : ""}`,
         );
         if (test.status === "failed") {
           core.info(`    ^^^ This test is marked as FAILED`);
@@ -171,8 +173,12 @@ ${failedTestSuites
 ${suite.testResults
   .filter((test) => test.status === "failed")
   .map((test) => {
-    return `<li><strong><code>${test.ancestorTitles.join(" > ")} | ${test.title}</code></strong>
+    // Check if test has custom metadata with targetFile
+    const metadata = (test as any).metadata as Metadata | undefined;
+    const fileToLink = metadata?.targetFile;
 
+    return `<li><strong><code>${test.ancestorTitles.join(" > ")} | ${test.title}</code></strong>
+${fileToLink ? `<br>🎯 **Fix needed in:** [\`${fileToLink}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink})<br>` : ""}
 <details>
 <summary>📋 Error Details</summary>
 
@@ -181,6 +187,20 @@ ${test.failureMessages.map((msg) => msg.replace(/    at/, "\n    at")).join("\n\
 \`\`\`
 
 </details>
+
+${
+  metadata
+    ? `<details>
+<summary>🛠️ Metadata</summary>
+
+\`\`\`json
+${JSON.stringify(metadata, null, 2)}
+\`\`\`
+
+</details>`
+    : ""
+}
+
 </li>`;
   })
   .join("\n\n")} 
