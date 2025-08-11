@@ -7,7 +7,7 @@ import type {
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 import { createComment, findPreviousComment, updateComment } from "./comment";
-import { Metadata } from "../types/jest";
+import { extractMetadataFromAncestors, cleanAncestorTitles } from "./metadata";
 
 /**
  * Options for configuring the Jest PR Reporter.
@@ -114,13 +114,14 @@ export default class JestReporter implements Reporter {
     failedTestSuites.forEach((suite, suiteIndex) => {
       core.info(`Suite ${suiteIndex + 1}: ${suite.testFilePath}`);
       suite.testResults.forEach((test, testIndex) => {
-        const targetFile = (test as any).metadata?.targetFile;
+        const metadata = extractMetadataFromAncestors(test.ancestorTitles);
+        const targetFile = metadata?.targetFile;
         core.info(
           `  Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"${targetFile ? ` - Target File: ${targetFile}` : ""}`,
         );
-        // Debug: Log the full metadata object if present
-        if ((test as any).metadata) {
-          core.info("    metadata: " + JSON.stringify((test as any).metadata));
+        // Debug: Log the full metadata object work if present
+        if (metadata) {
+          core.info("    metadata: " + JSON.stringify(metadata));
         }
         if (test.status === "failed") {
           core.info(`    ^^^ This test is marked as FAILED`);
@@ -212,10 +213,11 @@ ${(() => {
           }
 
           // Check if test has custom metadata with targetFile
-          const metadata = (test as any).metadata as Metadata | undefined;
+          const metadata = extractMetadataFromAncestors(test.ancestorTitles);
           const fileToLink = metadata?.targetFile;
+          const cleanAncestors = cleanAncestorTitles(test.ancestorTitles);
 
-          const testContent = `<li><strong><code>${test.ancestorTitles.join(" > ")} | ${test.title}</code></strong>
+          const testContent = `<li><strong><code>${cleanAncestors.join(" > ")} | ${test.title}</code></strong>
 ${fileToLink ? `<br>🎯 **Fix needed in:** [\`${fileToLink}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink})<br>` : ""}
 <details>
 <summary>📋 Error Details</summary>

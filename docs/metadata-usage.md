@@ -6,17 +6,20 @@ The Jest PR Reporter supports custom metadata to specify which files actually ne
 
 ### Basic Usage
 
-Simply set the metadata property on your test object:
+Use the `createTitleWithMetadata` utility function to create a test title with embedded metadata:
 
 ```typescript
-test("should validate user data", () => {
-  (test as any).metadata = {
-    targetFile: "src/models/User.ts",
-  };
+import { createTitleWithMetadata } from "jest-pr-reporter";
 
-  // Your test logic here
-  expect(true).toBe(true);
-});
+test(
+  createTitleWithMetadata("should validate user data", {
+    targetFile: "src/models/User.ts",
+  }),
+  () => {
+    // Your test logic here
+    expect(true).toBe(true);
+  },
+);
 ```
 
 ### Advanced Metadata
@@ -24,47 +27,30 @@ test("should validate user data", () => {
 You can add any custom properties you want:
 
 ```typescript
-test("should handle complex validation", () => {
-  (test as any).metadata = {
+test(
+  createTitleWithMetadata("should handle complex validation", {
     targetFile: "src/services/ValidationService.ts",
     priority: "high",
     category: "security",
     estimatedTime: "2h",
-  };
-
-  expect(complexValidation(data)).toBe(true);
-});
+  }),
+  () => {
+    expect(complexValidation(data)).toBe(true);
+  },
+);
 ```
 
 ## Configuration
 
-### TypeScript Configuration
-
-To avoid type casting, you can extend Jest's types in your project:
+### Import the Utilities
 
 ```typescript
-// types/jest.d.ts
-declare global {
-  namespace jest {
-    interface It {
-      metadata?: {
-        targetFile?: string;
-        [key: string]: any;
-      };
-    }
-  }
-}
-
-export {};
-```
-
-Then you can use it without type casting:
-
-```typescript
-test("should work", () => {
-  test.metadata = { targetFile: "src/types/User.ts" };
-  expect(true).toBe(true);
-});
+import {
+  createTitleWithMetadata,
+  parseTitleMetadata,
+  extractMetadataFromAncestors,
+  cleanAncestorTitles,
+} from "jest-pr-reporter";
 ```
 
 ## Examples
@@ -72,13 +58,17 @@ test("should work", () => {
 ### Basic Usage
 
 ```typescript
+import { createTitleWithMetadata } from "jest-pr-reporter";
+
 describe("User validation", () => {
-  test("should validate email format", () => {
-    (test as any).metadata = {
+  test(
+    createTitleWithMetadata("should validate email format", {
       targetFile: "src/validators/EmailValidator.ts",
-    };
-    expect(validateEmail("test@example.com")).toBe(true);
-  });
+    }),
+    () => {
+      expect(validateEmail("test@example.com")).toBe(true);
+    },
+  );
 });
 ```
 
@@ -86,20 +76,42 @@ describe("User validation", () => {
 
 ```typescript
 describe("API endpoints", () => {
-  test("should validate user creation", () => {
-    (test as any).metadata = {
+  test(
+    createTitleWithMetadata("should validate user creation", {
       targetFile: "src/controllers/UserController.ts",
-    };
-    expect(createUser(userData)).toBeDefined();
-  });
+    }),
+    () => {
+      expect(createUser(userData)).toBeDefined();
+    },
+  );
 
-  test("should handle validation errors", () => {
-    (test as any).metadata = {
+  test(
+    createTitleWithMetadata("should handle validation errors", {
       targetFile: "src/middleware/ValidationMiddleware.ts",
-    };
-    expect(handleValidationError(error)).toBeDefined();
-  });
+    }),
+    () => {
+      expect(handleValidationError(error)).toBeDefined();
+    },
+  );
 });
+```
+
+### Using in describe blocks
+
+You can also add metadata to describe blocks, which will be inherited by all tests within:
+
+```typescript
+describe(
+  createTitleWithMetadata("User validation", {
+    targetFile: "src/validators/UserValidator.ts",
+  }),
+  () => {
+    test("should validate email", () => {
+      // This test will inherit the metadata from the describe block
+      expect(validateEmail("test@example.com")).toBe(true);
+    });
+  },
+);
 ```
 
 ## Available Metadata Properties
@@ -110,15 +122,44 @@ describe("API endpoints", () => {
 ## Benefits
 
 - **Flexible** - Support for custom properties beyond just targetFile
-- **Easy to use** - Simple object assignment
-- **Backward compatible** - Works with existing tests
+- **Easy to use** - Simple function call to create titles with metadata
+- **Proper Jest integration** - Works with Jest's test structure
 - **Debug friendly** - Metadata is logged during test runs
+- **Clean output** - Metadata is automatically hidden from test titles in reports
 
 ## How It Works
 
-When you set `test.metadata.targetFile`, the reporter will:
+When you use `createTitleWithMetadata`, the reporter will:
 
-1. Display "🎯 **Fix needed in:** [filename]" above the error details
-2. Link to the specified file instead of just the test file
-3. Fall back to the test file path if no targetFile is specified
-4. Log the metadata in debug output for troubleshooting
+1. Encode the metadata as JSON in the test title after `::meta::`
+2. Automatically extract and use the metadata when generating reports
+3. Display "🎯 **Fix needed in:** [filename]" above the error details
+4. Link to the specified file instead of just the test file
+5. Fall back to the test file path if no targetFile is specified
+6. Log the metadata in debug output for troubleshooting
+7. Hide the metadata from displayed test titles in reports
+
+## Utility Functions
+
+### `createTitleWithMetadata(title, metadata)`
+
+Creates a test title with embedded metadata.
+
+### `parseTitleMetadata(title)`
+
+Parses a title to extract metadata and clean title.
+
+### `extractMetadataFromAncestors(ancestorTitles)`
+
+Extracts metadata from an array of ancestor titles (useful for describe blocks).
+
+### `cleanAncestorTitles(ancestorTitles)`
+
+Removes metadata from ancestor titles for clean display.
+
+## Important Notes
+
+- **Metadata is encoded in titles**: The metadata becomes part of the test title, so it's visible in Jest's output but automatically cleaned in reports
+- **Inheritance**: Tests inherit metadata from their parent describe blocks
+- **Fallback**: If no metadata is found, the reporter falls back to the test file path
+- **JSON format**: Metadata must be valid JSON (strings need quotes, etc.)
