@@ -12,13 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js for NPM
+      - name: Set up Node.js for Yarn
         uses: actions/setup-node@v4
         with:
           registry-url: "https://registry.npmjs.org"
 
-      - run: npm ci
-      - run: npm publish
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - run: yarn install --frozen-lockfile
+      - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -29,12 +32,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js for GPR
+      - name: Set up Node.js for Yarn
         uses: actions/setup-node@v4
         with:
           registry-url: "https://npm.pkg.github.com/"
 
-      - run: npm ci
-      - run: npm publish
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - run: yarn install --frozen-lockfile
+      - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
