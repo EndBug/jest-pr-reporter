@@ -103,6 +103,20 @@ export default class JestReporter implements Reporter {
       test.testResults.filter((test) => test.status === "failed"),
     );
 
+    // Debug: Log what we're actually filtering
+    console.log(">>> DEBUG: What tests are we finding?");
+    failedTestSuites.forEach((suite, suiteIndex) => {
+      console.log(`>>> Suite ${suiteIndex + 1}: ${suite.testFilePath}`);
+      suite.testResults.forEach((test, testIndex) => {
+        console.log(
+          `>>>   Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"`,
+        );
+        if (test.status === "failed") {
+          console.log(`>>>     ^^^ This test is marked as FAILED`);
+        }
+      });
+    });
+
     const status = failedTestSuites.length === 0 ? "success" : "failure";
 
     const projectTag = `<hr><p align="right">Created with <a href="https://github.com/EndBug/jest-pr-reporter"><code>EndBug/jest-pr-reporter</code></a> version ${require("../package.json").version}</p>`;
