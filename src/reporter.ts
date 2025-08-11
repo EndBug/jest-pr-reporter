@@ -75,6 +75,13 @@ export default class JestReporter implements Reporter {
       return;
     }
 
+    const passingTestSuites = runResults.testResults.filter(
+      (test) => test.numFailingTests === 0,
+    );
+    const passingTests = passingTestSuites.flatMap((test) =>
+      test.testResults.filter((test) => test.status === "passed"),
+    );
+
     const failedTestSuites = runResults.testResults.filter(
       (test) => test.numFailingTests > 0,
     );
@@ -92,6 +99,14 @@ export default class JestReporter implements Reporter {
 
 All content tests are passing. If the other CI checks are passing too, you can merge this PR yourself.
 
+## 📊 Test Summary
+
+| Metric            | Count     |
+| ----------------- | --------- |
+| **Passing tests** | ${passingTests.length} / ${runResults.numTotalTests} |
+| **Passing test suites**   | ${passingTestSuites.length} / ${runResults.numTotalTestSuites} |
+| **Status**        | ✅ Passed |
+
 ${this._options?.footerSuccess ? `\n\n${this._options.footerSuccess}` : ""}
 
 ${this._options?.hideProjectTag ? "" : projectTag}
@@ -107,8 +122,8 @@ This comment will be updated automatically as you push new commits.
 
 | Metric            | Count     |
 | ----------------- | --------- |
-| **Failing Tests** | ${failedTests.length} |
-| **Test Suites**   | ${failedTestSuites.length} |
+| **Passing tests** | ${passingTests.length} / ${runResults.numTotalTests} |
+| **Passing test suites**   | ${passingTestSuites.length} / ${runResults.numTotalTestSuites} |
 | **Status**        | ❌ Failed |
 
 ## 🔍 Failing Test Details
