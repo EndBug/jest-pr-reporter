@@ -163,7 +163,7 @@ const reporterOptions = {
   workspace: process.env.GITHUB_WORKSPACE,
   workflowRunId: process.env.GITHUB_RUN_ID,
   jobName: process.env.GITHUB_JOB,
-  customHeader: "jest-tests",
+  header: "jest-tests",
   footerFailed: `## 🛠️ Next Steps
 
 1. **Review** the failing tests above
