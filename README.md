@@ -1,8 +1,8 @@
 # Jest PR Reporter
 
-[![jest](https://jestjs.io/img/jest-badge.svg)](https://github.com/facebook/jest)
-
 An opinionated Jest reporter that creates GitHub PR comments with test results.
+
+![Jest PR Reporter Example](docs/screen-1.png)
 
 ## Features
 
@@ -10,7 +10,6 @@ An opinionated Jest reporter that creates GitHub PR comments with test results.
 - ✅ Updates existing comments automatically
 - ✅ Shows detailed test failure information
 - ✅ Configurable footers for success/failure cases
-- ✅ No dependency on GitHub Actions environment variables
 
 ## Installation
 
