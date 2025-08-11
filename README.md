@@ -145,6 +145,46 @@ module.exports = {
 };
 ```
 
+### Advanced Configuration with Environment Variables
+
+For more complex setups, you can separate the reporter options and use environment variables:
+
+```javascript
+// jest.config.js
+/** @type {import('@endbug/jest-pr-reporter').ReporterOptions} */
+const reporterOptions = {
+  githubToken: process.env.GH_TOKEN,
+  owner: process.env.GITHUB_REPOSITORY_OWNER,
+  repo:
+    process.env.GITHUB_REPOSITORY &&
+    process.env.GITHUB_REPOSITORY.split("/")[1],
+  prNumber: Number(process.env.PR_NUMBER),
+  sha: process.env.GITHUB_SHA,
+  workspace: process.env.GITHUB_WORKSPACE,
+  workflowRunId: process.env.GITHUB_RUN_ID,
+  jobName: process.env.GITHUB_JOB,
+  customHeader: "jest-tests",
+  footerFailed: `## 🛠️ Next Steps
+
+1. **Review** the failing tests above
+2. **Fix** your files so that the tests pass
+3. **Push changes** and ensure CI passes
+
+> [!TIP]
+> Need help? Check the [README](https://github.com/campus-experts/campus-experts.github.io#readme) or ask in the Discord.
+`.trim(),
+};
+
+module.exports = {
+  preset: "ts-jest",
+  testEnvironment: "node",
+  reporters:
+    process.env.CI === "true"
+      ? [["@endbug/jest-pr-reporter", reporterOptions], "summary"]
+      : ["default"],
+};
+```
+
 ### In GitHub Actions
 
 ```yaml
@@ -164,7 +204,17 @@ jobs:
       - run: npm test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
 ```
+
+## Examples
+
+Check the [`examples/`](./examples/) directory for more detailed examples:
+
+- [`jest-config-example.js`](./examples/jest-config-example.js) - JavaScript configuration with environment variables
+- [`jest-config-example.ts`](./examples/jest-config-example.ts) - TypeScript configuration with proper typing
+- [`using-metadata.test.ts`](./examples/using-metadata.test.ts) - Examples of using metadata in tests
+- [`metadata-merging.test.ts`](./examples/metadata-merging.test.ts) - Examples of metadata inheritance and merging
 
 ## How It Works
 
