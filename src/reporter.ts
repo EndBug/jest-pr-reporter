@@ -181,30 +181,28 @@ ${this._options?.hideProjectTag ? "" : projectTag}
       repo: this._options.repo,
     };
 
-    const previous = await findPreviousComment(
-      this._octokit,
-      repo,
-      this._options.prNumber,
-      "",
-    );
-
-    if (!previous) {
-      await createComment(
+    try {
+      const previous = await findPreviousComment(
         this._octokit,
         repo,
         this._options.prNumber,
-        newBody,
         "",
       );
-      return;
-    } else {
-      await updateComment(
-        this._octokit,
-        previous.id,
-        newBody,
-        "",
-        previous.body,
-      );
+
+      if (!previous) {
+        await createComment(
+          this._octokit,
+          repo,
+          this._options.prNumber,
+          newBody,
+          "",
+        );
+        return;
+      } else {
+        await updateComment(this._octokit, previous.id, newBody, "");
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
