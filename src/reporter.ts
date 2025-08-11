@@ -12,6 +12,7 @@ import {
   cleanAncestorTitles,
   parseTitleMetadata,
 } from "./metadata";
+import { extractJobId } from "./github-actions";
 
 /**
  * Options for configuring the Jest PR Reporter.
@@ -53,9 +54,10 @@ interface ReporterOptions {
   workflowRunId: string;
 
   /**
-   * GitHub job ID (required for linking to the specific job within the workflow run).
+   * GitHub job name (required for linking to the specific job within the workflow run).
+   * The numeric job ID will be automatically extracted from the workflow run.
    */
-  jobId: string;
+  jobName: string;
 
   /**
    * Footer text to add to the comment when the tests fail.
@@ -127,9 +129,9 @@ export default class JestReporter implements Reporter {
 
     this._octokit = github.getOctokit(options.githubToken);
 
-    // Debug: Log the workflow run ID and job ID being used
+    // Debug: Log the workflow run ID and job name being used
     core.debug(`Using workflow run ID: ${options.workflowRunId}`);
-    core.debug(`Using job ID: ${options.jobId}`);
+    core.debug(`Using job name: ${options.jobName}`);
   }
 
   /**
@@ -244,7 +246,22 @@ export default class JestReporter implements Reporter {
 
     const projectTag = `<p align="right">Created with <a href="https://github.com/EndBug/jest-pr-reporter"><code>EndBug/jest-pr-reporter</code></a> version ${require("../package.json").version}</p>`;
 
-    const runReference = `These results currently reflect the results from [this run](https://github.com/${this._options.owner}/${this._options.repo}/actions/runs/${this._options.workflowRunId}/job/${this._options.jobId}).`;
+    // Extract the job ID automatically
+    const jobId = await extractJobId(
+      this._octokit,
+      this._options.owner,
+      this._options.repo,
+      this._options.workflowRunId,
+      this._options.jobName,
+    );
+
+    if (!jobId) {
+      core.warning(`Could not find job with name: ${this._options.jobName}`);
+    }
+
+    const runReference = jobId
+      ? `These results currently reflect the results from [this run](https://github.com/${this._options.owner}/${this._options.repo}/actions/runs/${this._options.workflowRunId}/job/${jobId}).`
+      : `These results currently reflect the results from [this run](https://github.com/${this._options.owner}/${this._options.repo}/actions/runs/${this._options.workflowRunId}).`;
 
     const newBody =
       status === "success"

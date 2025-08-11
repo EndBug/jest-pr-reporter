@@ -41,7 +41,7 @@ module.exports = {
         sha: process.env.GITHUB_SHA,
         workspace: process.env.GITHUB_WORKSPACE, // optional
         workflowRunId: process.env.GITHUB_RUN_ID,
-        jobId: process.env.GITHUB_JOB,
+        jobName: process.env.GITHUB_JOB,
         footerSuccess: "🎉 All tests passed!",
         footerFailed: "❌ Please fix the failing tests.",
         hideProjectTag: false, // optional, defaults to false
@@ -54,20 +54,20 @@ module.exports = {
 
 ### Options
 
-| Option           | Type      | Required | Description                                            |
-| ---------------- | --------- | -------- | ------------------------------------------------------ |
-| `githubToken`    | `string`  | ✅       | GitHub personal access token or GitHub App token       |
-| `owner`          | `string`  | ✅       | GitHub repository owner (username or organization)     |
-| `repo`           | `string`  | ✅       | GitHub repository name                                 |
-| `prNumber`       | `number`  | ✅       | Pull request number                                    |
-| `sha`            | `string`  | ✅       | Commit SHA for linking to specific files               |
-| `workflowRunId`  | `string`  | ✅       | GitHub workflow run ID for linking to the specific run |
-| `jobId`          | `string`  | ✅       | GitHub job ID for linking to the specific job          |
-| `workspace`      | `string`  | ❌       | Workspace path for normalizing test file paths         |
-| `footerSuccess`  | `string`  | ❌       | Custom footer text when tests pass                     |
-| `footerFailed`   | `string`  | ❌       | Custom footer text when tests fail                     |
-| `hideProjectTag` | `boolean` | ❌       | Whether to hide the project attribution tag            |
-| `failOnError`    | `boolean` | ❌       | Whether to fail the build if comment creation fails    |
+| Option           | Type      | Required | Description                                             |
+| ---------------- | --------- | -------- | ------------------------------------------------------- |
+| `githubToken`    | `string`  | ✅       | GitHub personal access token or GitHub App token        |
+| `owner`          | `string`  | ✅       | GitHub repository owner (username or organization)      |
+| `repo`           | `string`  | ✅       | GitHub repository name                                  |
+| `prNumber`       | `number`  | ✅       | Pull request number                                     |
+| `sha`            | `string`  | ✅       | Commit SHA for linking to specific files                |
+| `workflowRunId`  | `string`  | ✅       | GitHub workflow run ID for linking to the specific run  |
+| `jobName`        | `string`  | ✅       | GitHub job name (numeric ID is automatically extracted) |
+| `workspace`      | `string`  | ❌       | Workspace path for normalizing test file paths          |
+| `footerSuccess`  | `string`  | ❌       | Custom footer text when tests pass                      |
+| `footerFailed`   | `string`  | ❌       | Custom footer text when tests fail                      |
+| `hideProjectTag` | `boolean` | ❌       | Whether to hide the project attribution tag             |
+| `failOnError`    | `boolean` | ❌       | Whether to fail the build if comment creation fails     |
 
 ## Usage Examples
 
@@ -87,7 +87,7 @@ module.exports = {
         prNumber: 1,
         sha: process.env.GITHUB_SHA,
         workflowRunId: process.env.GITHUB_RUN_ID,
-        jobId: process.env.GITHUB_JOB,
+        jobName: process.env.GITHUB_JOB,
       },
     ],
   ],
@@ -110,7 +110,7 @@ module.exports = {
         prNumber: 1,
         sha: process.env.GITHUB_SHA,
         workflowRunId: process.env.GITHUB_RUN_ID,
-        jobId: process.env.GITHUB_JOB,
+        jobName: process.env.GITHUB_JOB,
         footerSuccess: "🎉 Tests are passing! You can merge this PR.",
         footerFailed:
           "❌ Please review and fix the failing tests before merging.",
