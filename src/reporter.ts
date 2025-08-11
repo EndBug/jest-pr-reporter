@@ -226,7 +226,7 @@ ${(() => {
           const cleanTestTitle = parseTitleMetadata(test.title).title;
 
           const testContent = `<li><strong><code>${cleanAncestors.join(" > ")} | ${cleanTestTitle}</code></strong>
-${fileToLink ? `<br>🎯 **Fix needed in:** [\`${fileToLink}\`](https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink})<br>` : ""}
+${fileToLink ? `<br>🎯 <strong>Fix needed in:</strong> <a href="https://github.com/${this._options.owner}/${this._options.repo}/blob/${this._options.sha}/${fileToLink}"><code>${fileToLink}</code></a><br>` : ""}
 <details>
 <summary>📋 Error Details</summary>
 
@@ -235,19 +235,6 @@ ${test.failureMessages.map((msg) => msg.replace(/    at/, "\n    at")).join("\n\
 \`\`\`
 
 </details>
-
-${
-  metadata
-    ? `<details>
-<summary>🛠️ Metadata</summary>
-
-\`\`\`json
-${JSON.stringify(metadata, null, 2)}
-\`\`\`
-
-</details>`
-    : ""
-}
 
 </li>`;
 
