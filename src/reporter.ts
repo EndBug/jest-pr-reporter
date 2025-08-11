@@ -5,6 +5,7 @@ import type {
   Reporter,
 } from "@jest/reporters";
 import * as github from "@actions/github";
+import * as core from "@actions/core";
 import { createComment, findPreviousComment, updateComment } from "./comment";
 
 /**
@@ -104,22 +105,24 @@ export default class JestReporter implements Reporter {
     );
 
     // Debug: Log what we're actually filtering
-    console.log(">>> DEBUG: What tests are we finding?");
+    core.startGroup("🔍 Jest Reporter Debug Info");
+    core.info("What tests are we finding?");
     failedTestSuites.forEach((suite, suiteIndex) => {
-      console.log(`>>> Suite ${suiteIndex + 1}: ${suite.testFilePath}`);
+      core.info(`Suite ${suiteIndex + 1}: ${suite.testFilePath}`);
       suite.testResults.forEach((test, testIndex) => {
-        console.log(
-          `>>>   Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"`,
+        core.info(
+          `  Test ${testIndex + 1}: "${test.title}" - Status: "${test.status}"`,
         );
         if (test.status === "failed") {
-          console.log(`>>>     ^^^ This test is marked as FAILED`);
+          core.info(`    ^^^ This test is marked as FAILED`);
         }
       });
     });
+    core.endGroup();
 
     const status = failedTestSuites.length === 0 ? "success" : "failure";
 
-    const projectTag = `<hr><p align="right">Created with <a href="https://github.com/EndBug/jest-pr-reporter"><code>EndBug/jest-pr-reporter</code></a> version ${require("../package.json").version}</p>`;
+    const projectTag = `<p align="right">Created with <a href="https://github.com/EndBug/jest-pr-reporter"><code>EndBug/jest-pr-reporter</code></a> version ${require("../package.json").version}</p>`;
 
     const newBody =
       status === "success"
