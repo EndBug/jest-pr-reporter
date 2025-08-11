@@ -92,7 +92,7 @@ export default class JestReporter implements Reporter {
     const passingTestSuites = runResults.testResults.filter(
       (test) => test.numFailingTests === 0,
     );
-    const passingTests = passingTestSuites.flatMap((test) =>
+    const passingTests = runResults.testResults.flatMap((test) =>
       test.testResults.filter((test) => test.status === "passed"),
     );
 
