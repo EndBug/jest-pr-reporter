@@ -4,6 +4,10 @@ on:
     types: [published]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   publish-npm:
     name: Publish on NPM
