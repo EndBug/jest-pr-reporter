@@ -12,6 +12,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rimraf dist && tsc",
+    "prepare": "npm run build",
     "test": "jest"
   },
   "dependencies": {
