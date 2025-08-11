@@ -17,7 +17,7 @@ import { extractJobId } from "./github-actions";
 /**
  * Options for configuring the Jest PR Reporter.
  */
-interface ReporterOptions {
+export interface ReporterOptions {
   /**
    * GitHub token for authentication.
    */
@@ -82,6 +82,13 @@ interface ReporterOptions {
    * @default false
    */
   failOnError?: boolean;
+
+  /**
+   * Custom string to append to the HTML comment header.
+   * The final header will be: "<!-- Sticky Pull Request Comment jest-pr-reporter: {header} -->"
+   * @example "v2.0.0" or "custom-build-123"
+   */
+  header?: string;
 }
 
 /**
@@ -420,7 +427,7 @@ ${this._options?.hideProjectTag ? "" : projectTag}
         this._octokit,
         repo,
         this._options.prNumber,
-        "",
+        this._options.header || "",
       );
 
       if (!previous) {
@@ -429,11 +436,16 @@ ${this._options?.hideProjectTag ? "" : projectTag}
           repo,
           this._options.prNumber,
           newBody,
-          "",
+          this._options.header || "",
         );
         return;
       } else {
-        await updateComment(this._octokit, previous.id, newBody, "");
+        await updateComment(
+          this._octokit,
+          previous.id,
+          newBody,
+          this._options.header || "",
+        );
       }
     } catch (error) {
       console.error(error);

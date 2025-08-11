@@ -68,6 +68,7 @@ module.exports = {
 | `footerFailed`   | `string`  | ❌       | Custom footer text when tests fail                      |
 | `hideProjectTag` | `boolean` | ❌       | Whether to hide the project attribution tag             |
 | `failOnError`    | `boolean` | ❌       | Whether to fail the build if comment creation fails     |
+| `header`         | `string`  | ❌       | Custom string to append to the HTML comment header      |
 
 ## Usage Examples
 
@@ -120,6 +121,30 @@ module.exports = {
 };
 ```
 
+### With Custom Header
+
+```javascript
+// jest.config.js
+module.exports = {
+  reporters: [
+    "default",
+    [
+      "@endbug/jest-pr-reporter",
+      {
+        githubToken: process.env.GITHUB_TOKEN,
+        owner: "EndBug",
+        repo: "jest-pr-reporter",
+        prNumber: 1,
+        sha: process.env.GITHUB_SHA,
+        workflowRunId: process.env.GITHUB_RUN_ID,
+        jobName: process.env.GITHUB_JOB,
+        header: "my-tests", // Results in: <!-- Sticky Pull Request Comment jest-pr-reporter: my-tests -->
+      },
+    ],
+  ],
+};
+```
+
 ### In GitHub Actions
 
 ```yaml
@@ -152,6 +177,7 @@ The reporter:
 5. Includes links to the specific workflow run for traceability
 6. Updates existing comments automatically
 7. Provides configurable footers for different scenarios
+8. Uses HTML comments with customizable headers for comment identification
 
 ## License
 

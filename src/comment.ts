@@ -15,7 +15,11 @@ type CreateCommentResponse = Awaited<
 >;
 
 function headerComment(header: string): string {
-  return `<!-- Sticky Pull Request Comment${header} -->`;
+  const baseHeader = "<!-- Sticky Pull Request Comment jest-pr-reporter";
+  if (header) {
+    return `${baseHeader}: ${header} -->`;
+  }
+  return `${baseHeader} -->`;
 }
 
 function bodyWithHeader(body: string, header: string): string {
