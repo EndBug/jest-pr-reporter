@@ -1,6 +1,6 @@
 {
   "name": "@endbug/jest-pr-reporter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An opinionated Jest reporter meant for GitHub Actions & PRs",
   "repository": "https://github.com/EndBug/jest-pr-reporter",
   "author": "Federico Grandi",
