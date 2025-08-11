@@ -1,5 +1,5 @@
 {
-  "name": "jest-pr-reporter",
+  "name": "@endbug/jest-pr-reporter",
   "version": "0.0.1",
   "description": "An opinionated Jest reporter meant for GitHub Actions & PRs",
   "repository": "https://github.com/EndBug/jest-pr-reporter",
