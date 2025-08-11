@@ -15,7 +15,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@jest/reporters": "^26.6.2"
+    "@jest/reporters": "^30.0.5"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
