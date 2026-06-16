@@ -3,6 +3,10 @@
   "version": "1.0.3",
   "description": "An opinionated Jest reporter meant for GitHub Actions & PRs",
   "repository": "https://github.com/EndBug/jest-pr-reporter",
+  "homepage": "https://github.com/EndBug/jest-pr-reporter#readme",
+  "bugs": {
+    "url": "https://github.com/EndBug/jest-pr-reporter/issues"
+  },
   "author": "Federico Grandi",
   "license": "MIT",
   "files": [
